@@ -20,7 +20,7 @@ const app: Application = express();
 // };
 
 app.use(cors({
-    origin: process.env.APP_URL || "http://localhost:5000",
+    origin: process.env.APP_URL || "http://localhost:5000", // client side url 
     credentials: true
 }))
 
