@@ -22,10 +22,12 @@ declare global {
   const auth = (...role:UserRole[])=>{
     return async(req:Request,res:Response,next:NextFunction)=>{
         // get user session
+        
         try {
             const session=await betterAuth.api.getSession({
             headers:req.headers as any
         })
+        
        
         if(!session){
             return res.status(401).json({
@@ -41,6 +43,7 @@ declare global {
 
 
         }
+      
         req.user={
             id:session.user.id,
             email:session.user.email,
@@ -49,7 +52,9 @@ declare global {
             name:session.user.name
 
         }
+
         if(role.length && !role.includes(req.user.role as UserRole)){
+
 
           return res.status(403).json({
                 message:"Forbidden ! you don't permission to access this recorccess",
