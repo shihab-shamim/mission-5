@@ -7,6 +7,8 @@ import { PostStatus } from "../../generated/prisma/enums";
 import paginationSortingHelper from "../helpers/paginationSortingHelper";
 import { success } from "better-auth/*";
 import { error } from 'node:console';
+import e from 'cors';
+import { UserRole } from '../middlewares/auth';
 
 
 const createPost = async (req: Request, res: Response) => {
@@ -94,8 +96,125 @@ const getSinglePostById=async(req: Request, res: Response)=>{
 
 }
 
+const getMyPost=async(req: Request, res: Response)=>{
+ 
+  // console.log(id);
+
+  try {
+     const user =req.user ;
+     if(!user){
+    //    res.status(400).send({
+    //   message:"Post Get by Id failed",
+    //   success:false
+    // })
+    throw  error("You are unauthorize")
+     }
+     const result=await postService.getMyPost(user.id)
+     res.send(result)
+    
+  } catch (error) {
+    res.status(400).send({
+      message:"Post fatche failed",
+      success:false
+    })
+    
+  }
+
+}
+
+
+
+const updatePost=async(req: Request, res: Response)=>{
+ 
+  // console.log(id);
+
+
+  try {
+     const user =req.user ;
+     if(!user){
+    //    res.status(400).send({
+    //   message:"Post Get by Id failed",
+    //   success:false
+    // })
+    throw  error("You are unauthorize")
+     }
+     const {postId}=req.params
+     const isAdmin= user.role=== UserRole.ADMIN
+     const result=await postService.updatePost(postId as string,req.body,user.id,isAdmin)
+     res.send(result)
+    
+  } catch (error) {
+    const errorMessage=(error instanceof Error) ?error.message :"Post updated failed"
+    res.status(400).send({
+      message:errorMessage,
+      success:false
+    })
+    
+  }
+
+}
+const deletePost=async(req: Request, res: Response)=>{
+ 
+  // console.log(id);
+
+
+  try {
+     const user =req.user ;
+     if(!user){
+    //    res.status(400).send({
+    //   message:"Post Get by Id failed",
+    //   success:false
+    // })
+    throw  error("You are unauthorize")
+     }
+     const {postId}=req.params
+     const isAdmin= user.role=== UserRole.ADMIN
+     const result=await postService.deletePost(postId as string,user.id,isAdmin)
+     res.send(result)
+    
+  } catch (error) {
+    const errorMessage=(error instanceof Error) ?error.message :"Post updated failed"
+    res.status(400).send({
+      message:errorMessage,
+      success:false
+    })
+    
+  }
+
+}
+const getStats=async(req: Request, res: Response)=>{
+ 
+  // console.log(id);
+
+
+  try {
+    //  const user =req.user ;
+    //  if(!user){
+    // //    res.status(400).send({
+    // //   message:"Post Get by Id failed",
+    // //   success:false
+    // // })
+    // throw  error("You are unauthorize")
+    //  }
+    //  const {postId}=req.params
+    //  const isAdmin= user.role=== UserRole.ADMIN
+     const result=await postService.getStats()
+     res.send(result)
+    
+  } catch (error) {
+    const errorMessage=(error instanceof Error) ?error.message :"Post updated failed"
+    res.status(400).send({
+      message:errorMessage,
+      success:false
+    })
+    
+  }
+
+}
+
+
 export const PostController = {
   createPost,
   getAllPost,
- getSinglePostById
+ getSinglePostById,getMyPost,updatePost,deletePost,getStats
 };

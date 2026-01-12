@@ -70,10 +70,17 @@ router.get("/",PostController.getAllPost)
 
 router.post(
     "/",
-    auth(UserRole.USER),
+    auth(UserRole.USER,UserRole.ADMIN),
     PostController.createPost
 )
 
+router.get("/my-post",auth(UserRole.ADMIN,UserRole.USER),PostController.getMyPost)
+router.get("/stats",auth(UserRole.ADMIN),PostController.getStats)
+
 router.get("/:postId",PostController.getSinglePostById)
+router.patch("/:postId",auth(UserRole.ADMIN,UserRole.USER),PostController.updatePost)
+router.delete("/:postId",auth(UserRole.ADMIN,UserRole.USER),PostController.deletePost)
+
+
 
 export const postRouter: Router = router;

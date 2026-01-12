@@ -1,7 +1,9 @@
+import { Result, Either } from './../../generated/prisma/internal/prismaNamespace';
 import { count } from "node:console";
 import { CommentStatus, Post, PostStatus } from "../../generated/prisma/browser";
 import { PostWhereInput } from "../../generated/prisma/models";
 import { prisma } from "../lib/prisma";
+import { promise } from 'better-auth/*';
 
 const createPost = async (
   data: Omit<Post, "id" | "createdAt" | "updatedAt" | "authorId">,
@@ -164,10 +166,152 @@ return await prisma.$transaction(async(tx)=>{
  
 }
 
+const getMyPost=async(authorId:string)=>{
+  const userInfo=await prisma.user.findUniqueOrThrow({
+    where:{
+      id:authorId,
+      status:"ACTIVE"
+    },
+    select:{
+      id:true
+    }
+  })
+  const result=await prisma.post.findMany({
+    where:{
+      authorId
+    },
+    orderBy:{
+      createdAt:"desc"
+    },
+    include:{
+      _count:{
+        select:{
+          comments:true
+        }
+      }
+    }
+  })
+
+  const total=await prisma.post.count({
+     where:{
+      authorId
+    },
+  })
+  //  const total=await prisma.post.aggregate({
+  //   where:{
+  //     authorId
+  //   },
+  //    _count:{
+  //     id:true
+  //   },
+  // })
+
+  return{data:result,total}
+
+
+
+}
+
+
+/**
+ * user - shudhu nijer post update korte parbe ,isFeatured update korte parbena  
+ * admin-  sobar post update korte parbe 
+ * 
+ */
+const updatePost =async(postId:string,data:Partial<Post>,authorId:string,isAdmin:boolean)=>{
+  const postData=await prisma.post.findUniqueOrThrow({
+    where:{
+      id:postId
+    },
+    select:{
+      id:true,authorId:true
+    }
+  })
+
+  if(  !isAdmin && (postData.authorId!==authorId)){
+    throw new Error("tmi ai post ar malik nah")
+  }
+  if(!isAdmin){
+    delete data.isFeatured
+  }
+
+
+  const result=await prisma.post.update({
+    where:{
+      id:postId
+    },
+    data
+  })
+
+  return result
+
+
+
+}
+
+
+/**
+ * user - nijer create post delete korte parbe
+ * admin-  sobar post delete korte parbe 
+ * 
+ */
+
+const deletePost=async(postId:string,authorId:string,isAdmin:boolean)=>{
+    const postData=await prisma.post.findUniqueOrThrow({
+    where:{
+      id:postId
+    },
+    select:{
+      id:true,authorId:true
+    }
+  })
+    if(  !isAdmin && (postData.authorId!==authorId)){
+    throw new Error("tmi ai post ar malik nah delete korte parbena")
+  }
+
+  return await prisma.post.delete({
+    where:{
+      id:postId
+    }
+  })
+
+
+}
+
+const getStats = async () => {
+  return await prisma.$transaction(async (tx) => {
+    const [
+      totalPosts,
+      publishedPosts,
+      draftPosts,
+      archivedPosts,
+      totalComments,
+      approveComments
+    ] = await Promise.all([
+      tx.post.count(),
+      tx.post.count({ where: { status: PostStatus.PUBLISHED } }),
+      tx.post.count({ where: { status: PostStatus.DRAFT } }),
+      tx.post.count({ where: { status: PostStatus.ARCHIVED } }),
+      tx.comment.count(),
+      tx.comment.count({where:{status:CommentStatus.APPROVED}}),
+    ]);
+
+    return {
+      totalPosts,
+      publishedPosts,
+      draftPosts,
+      archivedPosts,
+      totalComments,
+      approveComments
+    };
+  });
+};
+
+
 export const postService = {
   createPost,
   getAllPost,
-  getSinglePostById
+  getSinglePostById,getMyPost,updatePost,deletePost,getStats
 };
 
 // const getAllPost = async (filters: { authorId?: string; published?: boolean }) => {

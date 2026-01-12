@@ -1,6 +1,7 @@
 import { auth } from './../../lib/auth';
 import { Request, Response } from "express";
 import { commentService } from "./comment.service";
+import { any } from 'better-auth/*';
 
 const createComment=async(req: Request, res: Response)=>{
     try {
@@ -70,7 +71,37 @@ const deleteComment = async (req: Request, res: Response) => {
     });
   }
 };
+const updateComment = async (req: Request, res: Response) => {
+    try {
+        const user = req.user;
+        const { commentId } = req.params;
+        const result = await commentService.updateComment(commentId as string, req.body, user?.id as string)
+        res.status(200).json(result)
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({
+            error: "Comment update failed!",
+            details: e
+        })
+    }
+}
+const moderateComment = async (req: Request, res: Response) => {
+    try {
+        // const user = req.user;
+        const { commentId } = req.params ;
+
+        const result = await commentService.moderateComment(commentId as string,req.body)
+        res.status(200).json(result)
+    } catch (e) {
+      const errorMessage=(e instanceof Error)? e.message : "Comment update failed!"
+        res.status(400).json({
+            error: errorMessage,
+            details: e
+        })
+    }
+}
+
 
 export const CommentController={
-    createComment,getCommentById,getCommentByAuthor,deleteComment
+    createComment,getCommentById,getCommentByAuthor,deleteComment,updateComment,moderateComment
 }
