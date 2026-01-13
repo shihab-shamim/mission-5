@@ -6,6 +6,8 @@ import cors from 'cors';
 import { postRouter } from "./moules/post.router";
 import { auth } from "./lib/auth";
 import { commentRouter } from "./moules/comment/comment.router";
+import globalErrorHandler from "./middlewares/globalErrorHandler";
+import { notFound } from "./middlewares/notFound";
 
 const app: Application = express();
 
@@ -27,6 +29,7 @@ app.use(cors({
 
 app.use(express.json());
 
+
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use("/posts", postRouter);
@@ -36,5 +39,10 @@ app.use("/comments",commentRouter)
 app.get("/", (req, res) => {
     res.send("Hello from blog server !");
 });
+app.use(globalErrorHandler)
+app.use(notFound)
+
+
+
 
 export default app;
